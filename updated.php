@@ -1,47 +1,53 @@
 <?php
-    $units = "";
-    $orig ="";
-    $destination ="";
-    $delivDist=5;
-    $key ="";
+    function debug( $data ) {
+      $output = $data;
+      if ( is_array( $output ) )
+	      $output = implode(',', $output);
+
+      echo "<script>console.log( 'Debug Objects: " . $output . "\n' );</script>";      
+    }
 
     class dist_calc
     {
-	private $url = "https://maps.googleapis.com/maps/api/distancematrix/json?";
-	private $units;
-	private $orig;
-	private $dest;
-	private $deliveDist;
-	private $key;
-	private $request;
-	
+	private $key        = '';
+	private $url        = 'https://maps.googleapis.com/maps/api/distancematrix/json?';
+	private $units      = "";
+	private $orig       = "";
+	private $dest       = "";
+	private $deliveDist = 0;
+	private $request    = "";
+	function setOrig($origin){$this->orig = $origin;}
+	function setUnit($unit){$this->units = $unit;}
+	function setDest($des){$this->dest = $des;}
+	function setDDist($delivD){$this->deliveDist = $delivD;}
+	function setReq($req){$this->request = $req;}
+
     	function calculateDistance(){
-		$request = $url."units=".$units."&origins=".$orig."&destinations=".$dest."&key=".$key;
+		$this->setReq($this->url."units=".$this->units."&origins=".$this->orig."&destinations=".$this->dest."&key=".$this->key);
+		$delDist = $this->queryServ($this->request);
 
-		$ch = curl_init($request);
-		
-
+	}
+	function queryServ($req){
+		$ch = curl_init($req);
+		$res = curl_exec($ch);
 		curl_close($ch);
 	}
-	function setOrig(origin){
-		$orig = origin;
+	function init($dLoc){
+		$this->setUnit('imperial');
+		$this->setOrig('12+Summit+Street+Newark+NJ');
+		$this->setDest($dLoc);
+		$this->setDDist(5);
 	}
+
 	
     }
+    function prepareInput($input){
+      $input = preg_replace('/\s+/', '+', $input);
+      return $input;
+    }
 
-
-  ?>
-  <style>
-  </style>
-
-  <html>
-    <head>
-        <div id="formDiv" style="border:solid black 5px; position=relative; height:70px; width:300px">
-            <form id="dataDiv" style="padding:10px; margin-left:10px">
-                Enter your Address:<br>
-                <input type="text" id="delivAdd" name="delivAdd" style="margin-left:5px"></input>
-                <button onclick=calculateDistance()>Submit</button>
-            </form>
-        </div>
-    </head>
-  </html>
+    $delivAddress = htmlspecialchars($_GET["dLocation"]);
+    $query = new dist_calc;
+    $query->init(prepareInput($delivAddress));
+    $query->calculateDistance();
+?>
